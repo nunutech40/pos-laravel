@@ -83,19 +83,21 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
         $token = $this->guard()->attempt($credentials);
 
-        $response = "";
+        // new user
+        $user  = new User;
+        $user->token = $token;
 
         if ($token) {
             $response = response()->json([
                 'status' => 'success',
                 'code' => 200,
-                'data' => $token,
+                'data' => $user
             ]);
         } else {
             $response = response()->json([
                 'status' => 'failed',
                 'code' => 400,
-                'message' => "error login."
+                'message' => "Username or password is incorrect."
             ]);
         }
 
