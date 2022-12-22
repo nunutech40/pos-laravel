@@ -30,39 +30,42 @@ class AuthController extends Controller
             return response()-> json($validator->errors(),
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );
-        }
-
-
-        // save data in try catch
-        try {
-
-            $user = User::create([
-                'name' => request('name'),
-                'email' => request('email'),
-                'role' => request('role'),
-                'password' => Hash::make(request('password'))
-            ]);
-
-            if($user) {
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'success register'
+        } else {
+            // save data in try catch
+            try {
+                $user = User::create([
+                    'name' => request('name'),
+                    'email' => request('email'),
+                    'role' => request('role'),
+                    'password' => Hash::make(request('password'))
                 ]);
-            } else {
+
+                // new user
+                $data  = new User;
+                $data->message = 'Success register';
+
+                if($user) {
+                    return response()->json([
+                        'status' => 'success',
+                        'code' => 200,
+                        'message' => $data
+                    ]);
+                } else {
+                    return response()->json([
+                        'status' => 'failed',
+                        'code' => 400,
+                        'message' => 'failed register'
+                    ]);
+                }
+
+
+            } catch(QueryException $e) {
                 return response()->json([
                     'status' => 'failed',
-                    'message' => 'failed register'
+                    'message' => "Failed masuk tycatc"
                 ]);
             }
-
-        } catch(QueryException $e) {
-            return response()->json([
-                'status' => 'failed',
-                'message' => "Failed masuk tycatc"
-            ]);
         }
-
-
 
     }
 
@@ -83,15 +86,21 @@ class AuthController extends Controller
         $credentials = $request->only('email', 'password');
         $token = $this->guard()->attempt($credentials);
 
-        // new user
-        $user  = new User;
-        $user->token = $token;
+        // get data user
+        $user = User::where('email', $request->email)->first();
+
+        // get data token
+        $responseWithToken = $this->respondWithToken($token)->original;
+        $newUser = new User;
+        $newUser->user_id = $user->id;
+        $newUser->role = $user->role;
+        $newUser->data = $responseWithToken;
 
         if ($token) {
             $response = response()->json([
                 'status' => 'success',
                 'code' => 200,
-                'data' => $user
+                'data' => $newUser
             ]);
         } else {
             $response = response()->json([
