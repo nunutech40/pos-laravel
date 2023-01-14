@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
@@ -72,16 +73,18 @@ class AuthController extends Controller
     /**
      * Get a JWT token via given credentials.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      *
      * @return \Illuminate\Http\JsonResponse
+     * @throws ValidationException
      */
     public function login(Request $request)
     {
-        $request->validate([
+        $rules = [
             'email' => 'required|string|email',
             'password' => 'required|string',
-        ]);
+        ];
+        $this->validate($request, $rules);
 
         $credentials = $request->only('email', 'password');
         $token = $this->guard()->attempt($credentials);
